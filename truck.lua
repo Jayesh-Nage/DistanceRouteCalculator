@@ -1,44 +1,317 @@
--- Minimal truck profile for testing (US-wide)
--- No restrictions, includes all roads
+-- Truck profile for U.S. routing
 
--- Speed assignment per road type
-function get_speed(way, highway, max_speed)
-    local speed = 25 -- default speed
-    if highway == "motorway" then speed = 80
-    elseif highway == "trunk" then speed = 75
-    elseif highway == "primary" then speed = 60
-    elseif highway == "secondary" then speed = 50
-    elseif highway == "tertiary" then speed = 40
-    elseif highway == "unclassified" then speed = 35
-    elseif highway == "residential" then speed = 25
-    elseif highway == "service" then speed = 20
-    elseif highway == "track" then speed = 10
+api_version = 4
+
+Set = require('lib/set')
+Sequence = require('lib/sequence')
+Handlers = require("lib/way_handlers")
+Relations = require("lib/relations")
+Obstacles = require("lib/obstacles")
+find_access_tag = require("lib/access").find_access_tag
+limit = require("lib/maxspeed").limit
+Utils = require("lib/utils")
+Measure = require("lib/measure")
+
+function setup()
+  return {
+    properties = {
+      max_speed_for_map_matching = 180 / 3.6, -- 180 km/h -> m/s
+      weight_name = 'routability',
+      process_call_tagless_node = false,
+      u_turn_penalty = 20,
+      continue_straight_at_waypoint = true,
+      use_turn_restrictions = true,
+      left_hand_driving = false,
+      traffic_light_penalty = 2,
+    },
+
+    default_mode = mode.driving,
+    default_speed = 10,
+    oneway_handling = true,
+    side_road_multiplier = 0.8,
+    turn_penalty = 7.5,
+    speed_reduction = 0.8,
+    turn_bias = 1.075,
+    cardinal_directions = false,
+
+    -- Vehicle dimensions and weight
+    vehicle_height = 4.5, -- meters
+    vehicle_width = 2.6, -- meters
+    vehicle_length = 16.0, -- meters
+    vehicle_weight = 36000, -- kg
+
+    -- Access restrictions
+    suffix_list = {
+      'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'North', 'South', 'West', 'East'
+    },
+
+    barrier_whitelist = Set {
+      'cattle_grid', 'border_control', 'toll_booth', 'sally_port', 'gate', 'lift_gate', 'no', 'entrance', 'height_restrictor', 'arch'
+    },
+
+    access_tag_whitelist = Set {
+      'yes', 'motorcar', 'motor_vehicle', 'vehicle', 'permissive', 'designated', 'hov'
+    },
+
+    access_tag_blacklist = Set {
+      'no', 'agricultural', 'forestry', 'emergency', 'psv', 'customers', 'private', 'delivery', 'destination'
+    },
+
+    service_access_tag_blacklist = Set {
+      'private'
+    },
+
+    restricted_access_tag_list = Set {
+      'private', 'delivery', 'destination', 'customers'
+    },
+
+    access_tags_hierarchy = Sequence {
+      'motorcar', 'motor_vehicle', 'vehicle', 'access'
+    },
+
+    service_tag_forbidden = Set {
+      'emergency_access'
+    },
+
+    restrictions = Sequence {
+      'motorcar', 'motor_vehicle', 'vehicle'
+    },
+
+    classes = Sequence {
+      'toll', 'motorway', 'ferry', 'restricted', 'tunnel'
+    },
+
+    excludable = Sequence {
+      Set {'toll'},
+      Set {'motorway'},
+      Set {'ferry'}
+    },
+
+    avoid = Set {
+      'area', 'reversible', 'impassable', 'hov_lanes', 'steps', 'construction', 'proposed'
+    },
+
+    speeds = Sequence {
+      highway = {
+        motorway = 105,
+        motorway_link = 50,
+        trunk = 90,
+        trunk_link = 40,
+        primary = 70,
+        primary_link = 30,
+        secondary = 60,
+        secondary_link = 25,
+        tertiary = 45,
+        tertiary_link = 20,
+        unclassified = 25,
+        residential = 25,
+        living_street = 10,
+        service = 15
+      }
+    },
+
+    service_penalties = {
+      alley = 0.5,
+      parking = 0.5,
+      parking_aisle = 0.5,
+      driveway = 0.5,
+      ["drive-through"] = 0.5,
+      ["drive-thru"] = 0.5
+    },
+
+    restricted_highway_whitelist = Set {
+      'motorway', 'motorway_link', 'trunk', 'trunk_link', 'primary', 'primary_link', 'secondary', 'secondary_link', 'tertiary', 'tertiary_link', 'residential', 'living_street', 'unclassified', 'service'
+    },
+
+    construction_whitelist = Set {
+      'no', 'widening', 'minor'
+    },
+
+    route_speeds = {
+      ferry = 5,
+      shuttle_train = 10
+    },
+
+    bridge_speeds = {
+      movable = 5
+    },
+
+    surface_speeds = {
+      asphalt = nil,
+      concrete = nil,
+      ["concrete:plates"] = nil,
+      ["concrete:lanes"] = nil,
+      paved = nil,
+      cement = 80,
+      compacted = 80,
+      fine_gravel = 80,
+      paving_stones = 60,
+      metal = 60,
+      bricks = 60,
+      grass = 40,
+      wood = 40,
+      sett = 40,
+      grass_paver = 40,
+      gravel = 40,
+      unpaved = 40,
+      ground = 40,
+      dirt = 40,
+      pebblestone = 40,
+      tartan = 40,
+      cobblestone = 30,
+      clay = 30,
+      earth = 20,
+      stone = 20,
+      rocky = 20,
+      sand = 20,
+      mud = 10
+    },
+
+    tracktype_speeds = {
+      grade1 = 60,
+      grade2 = 40,
+      grade3 = 30,
+      grade4 = 25,
+      grade5 = 20
+    },
+
+    smoothness_speeds = {
+      intermediate = 80,
+      bad = 40,
+      very_bad = 20,
+      horrible = 10,
+      very_horrible = 5,
+      impassable = 0
+    },
+
+    maxspeed_table_default = {
+      urban = 50,
+      rural = 90,
+      trunk = 110,
+      motorway = 130
+    },
+
+    maxspeed_table = {
+      ["us:urban"] = 40,
+      ["us:rural"] = 80,
+      ["us:motorway"] = 105
+    },
+
+    relation_types = Sequence {
+      "route"
+    },
+
+    highway_turn_classification = {},
+    access_turn_classification = {}
+  }
+end
+
+function process_node(profile, node, result, relations)
+  local access = find_access_tag(node, profile.access_tags_hierarchy)
+  if access then
+    if profile.access_tag_blacklist[access] and not profile.restricted_access_tag_list[access] then
+      obstacle_map:add(node, Obstacle.new(obstacle_type.barrier))
     end
-    return speed
-end
+  else
+    local barrier = node:get_value_by_key("barrier")
+    if barrier then
+      local restricted_by_height = false
+      if barrier == 'height_restrictor' then
+        local maxheight = Measure.get_max_height(node:get_value_by_key("maxheight"), node)
+        restricted_by_height = maxheight and maxheight < profile.vehicle_height
+      end
 
--- Process each way: no filtering at all
-function process_way(way, result, relations)
-    -- Assign speed
-    local highway = way:get_value_by_key("highway")
-    local base_speed = get_speed(way, highway, nil)
-    result:set_speed(base_speed)
+      local bollard = node:get_value_by_key("bollard")
+      local rising_bollard = bollard and "rising" == bollard
 
-    -- Handle oneway if present
-    local oneway = way:get_value_by_key("oneway")
-    if oneway == "yes" or oneway == "1" or oneway == "true" then
-        result.backward_mode = 0
-    elseif oneway == "-1" then
-        result.forward_mode = 0
+      local kerb = node:get_value_by_key("kerb")
+      local highway = node:get_value_by_key("highway")
+      local flat_kerb = kerb and ("lowered" == kerb or "flush" == kerb)
+      local highway_crossing_kerb = barrier == "kerb" and highway and highway == "crossing"
+
+      if not profile.barrier_whitelist[barrier]
+        and not rising_bollard
+        and not flat_kerb
+        and not highway_crossing_kerb
+        or restricted_by_height then
+        obstacle_map:add(node, Obstacle.new(obstacle_type.barrier))
+      end
     end
+  end
+
+  Obstacles.process_node(profile, node)
 end
 
--- Node processing (do nothing)
-function process_node(node, result)
+function process_way(profile, way, result, relations)
+  local data = {
+    highway = way:get_value_by_key('highway'),
+    bridge = way:get_value_by_key('bridge'),
+    route = way:get_value_by_key('route')
+  }
+
+  if (not data.highway or data.highway == '') and
+     (not data.route or data.route == '') then
     return
+  end
+
+  handlers = Sequence {
+    WayHandlers.default_mode,
+    WayHandlers.blocked_ways,
+    WayHandlers.avoid_ways,
+    WayHandlers.handle_height,
+    WayHandlers.handle_width,
+    WayHandlers.handle_length,
+    WayHandlers.handle_weight,
+    WayHandlers.access,
+    WayHandlers.oneway,
+    WayHandlers.destinations,
+    WayHandlers.ferries,
+    WayHandlers.movables,
+    WayHandlers.service,
+    WayHandlers.hov,
+    WayHandlers.speed,
+    WayHandlers.maxspeed,
+    WayHandlers.surface,
+    WayHandlers.penalties,
+    WayHandlers.classes,
+    WayHandlers.turn_lanes,
+    WayHandlers.classification,
+    WayHandlers.roundabouts,
+    WayHandlers.startpoint,
+    WayHandlers.driving_side,
+    WayHandlers.names,
+    WayHandlers.weights,
+    WayHandlers.way_classification_for_turn
+  }
+
+  WayHandlers.run(profile, way, result, data, handlers, relations)
+
+  if profile.cardinal_directions then
+    Relations.process_way_refs(way, relations, result)
+  end
 end
 
--- Turn processing (do nothing)
-function process_turn(turn, result)
-    return
-end
+function process_turn(profile, turn)
+  local turn_penalty = profile.turn_penalty
+  local turn_bias = turn.is_left_hand_driving and 1. / profile.turn_bias or profile.turn_bias
+
+  for _, obs in pairs(obstacle_map:get(turn.from, turn.via)) do
+    if obs.type == obstacle_type.stop_minor and not Obstacles.entering_by_minor_road(turn) then
+      goto skip
+    end
+    if turn.number_of_roads == 2
+        and obs.type == obstacle_type.stop
+        and obs.direction == obstacle_direction.none
+        and turn.source_road.distance < 20
+        and turn.target_road.distance > 20 then
+            goto skip
+    end
+    turn.duration = turn.duration + obs.duration
+    ::skip::
+  end
+
+  if turn.number_of_roads > 2 or turn.source_mode ~= turn.target_mode or turn.is_u_turn then
+    if turn.angle >= 0 then
+      turn.duration = turn.duration + turn_penalty / (1 + math.exp( -((13 / turn_bias) *
+::contentReference[oaicite:0]{index=0}
+ 
