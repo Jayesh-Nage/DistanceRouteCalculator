@@ -1,4 +1,4 @@
--- Car profile for OSRM
+-- Truck profile for OSRM
 api_version = 4
 
 Set = require('lib/set')
@@ -11,6 +11,7 @@ limit = require("lib/maxspeed").limit
 Utils = require("lib/utils")
 Measure = require("lib/measure")
 
+-- Setup function
 function setup()
   return {
     properties = {
@@ -32,63 +33,35 @@ function setup()
     turn_bias                = 1.05,
     cardinal_directions      = false,
 
-    -- Car-specific vehicle dimensions
-    vehicle_height = 1.6,  -- meters
-    vehicle_width  = 1.8,  -- meters
-    vehicle_length = 4.5,  -- meters
-    vehicle_weight = 1500, -- kg
+    -- Vehicle dimensions
+    vehicle_height = 1.6,
+    vehicle_width  = 1.8,
+    vehicle_length = 4.5,
+    vehicle_weight = 1500,
 
     suffix_list = {
       'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'North', 'South', 'West', 'East'
     },
 
     barrier_whitelist = Set {
-      'cattle_grid',
-      'border_control',
-      'toll_booth',
-      'sally_port',
-      'gate',
-      'lift_gate',
-      'no',
-      'entrance',
-      'height_restrictor',
-      'arch'
+      'cattle_grid','border_control','toll_booth','sally_port','gate','lift_gate','no',
+      'entrance','height_restrictor','arch'
     },
 
     access_tag_whitelist = Set {
-      'yes',
-      'motorcar',
-      'motor_vehicle',
-      'vehicle',
-      'permissive',
-      'designated',
-      'hov'
+      'yes','motorcar','motor_vehicle','vehicle','permissive','designated','hov'
     },
 
     access_tag_blacklist = Set {
-      'no',
-      'agricultural',
-      'forestry',
-      'emergency',
-      'psv',
-      'customers',
-      'private',
-      'delivery',
-      'destination'
+      'no','agricultural','forestry','emergency','psv','customers','private','delivery','destination'
     },
 
     restricted_access_tag_list = Set {
-      'private',
-      'delivery',
-      'destination',
-      'customers'
+      'private','delivery','destination','customers'
     },
 
     access_tags_hierarchy = Sequence {
-      'motorcar',
-      'motor_vehicle',
-      'vehicle',
-      'access'
+      'motorcar','motor_vehicle','vehicle','access'
     },
 
     service_tag_forbidden = Set {
@@ -96,29 +69,17 @@ function setup()
     },
 
     restrictions = Sequence {
-      'motorcar',
-      'motor_vehicle',
-      'vehicle'
+      'motorcar','motor_vehicle','vehicle'
     },
 
-    classes = Sequence {
-      'toll', 'motorway', 'ferry', 'restricted', 'tunnel'
-    },
+    classes = Sequence { 'toll', 'motorway', 'ferry', 'restricted', 'tunnel' },
 
     excludable = Sequence {
-      Set {'toll'},
-      Set {'motorway'},
-      Set {'ferry'}
+      Set {'toll'}, Set {'motorway'}, Set {'ferry'}
     },
 
     avoid = Set {
-      'area',
-      'reversible',
-      'impassable',
-      'hov_lanes',
-      'steps',
-      'construction',
-      'proposed'
+      'area','reversible','impassable','hov_lanes','steps','construction','proposed'
     },
 
     speeds = Sequence {
@@ -141,97 +102,59 @@ function setup()
     },
 
     service_penalties = {
-      alley             = 0.5,
-      parking           = 0.5,
-      parking_aisle     = 0.5,
-      driveway          = 0.5,
-      ["drive-through"] = 0.5,
-      ["drive-thru"]    = 0.5
+      alley = 0.5, parking = 0.5, parking_aisle = 0.5, driveway = 0.5,
+      ["drive-through"] = 0.5, ["drive-thru"] = 0.5
     },
 
     restricted_highway_whitelist = Set {
-      'motorway', 'motorway_link', 'trunk', 'trunk_link',
-      'primary', 'primary_link', 'secondary', 'secondary_link',
-      'tertiary', 'tertiary_link', 'residential', 'living_street',
-      'unclassified', 'service'
+      'motorway','motorway_link','trunk','trunk_link','primary','primary_link',
+      'secondary','secondary_link','tertiary','tertiary_link','residential',
+      'living_street','unclassified','service'
     },
 
-    construction_whitelist = Set {
-      'no', 'widening', 'minor'
-    },
+    construction_whitelist = Set { 'no','widening','minor' },
 
-    route_speeds = {
-      ferry = 5,
-      shuttle_train = 10
-    },
-
-    bridge_speeds = {
-      movable = 5
-    },
+    route_speeds = { ferry = 5, shuttle_train = 10 },
+    bridge_speeds = { movable = 5 },
 
     surface_speeds = {
-      asphalt = nil,
-      concrete = nil,
-      ["concrete:plates"] = nil,
-      ["concrete:lanes"] = nil,
-      paved = nil,
-      cement = 100,
-      compacted = 80,
-      fine_gravel = 60,
-      paving_stones = 50,
-      metal = 60,
-      bricks = 50,
-      grass = 30,
-      wood = 30,
-      sett = 30,
-      gravel = 40,
-      unpaved = 40,
-      dirt = 30,
-      cobblestone = 20,
-      mud = 10
+      asphalt=nil, concrete=nil, ["concrete:plates"]=nil, ["concrete:lanes"]=nil,
+      paved=nil, cement=100, compacted=80, fine_gravel=60, paving_stones=50, metal=60,
+      bricks=50, grass=30, wood=30, sett=30, gravel=40, unpaved=40, dirt=30, cobblestone=20, mud=10
     },
 
-    tracktype_speeds = {
-      grade1 =  60,
-      grade2 =  40,
-      grade3 =  30,
-      grade4 =  25,
-      grade5 =  20
-    },
+    tracktype_speeds = { grade1=60, grade2=40, grade3=30, grade4=25, grade5=20 },
 
     smoothness_speeds = {
-      intermediate    =  80,
-      bad             =  40,
-      very_bad        =  20,
-      horrible        =  10,
-      very_horrible   =  5,
-      impassable      =  0
+      intermediate=80, bad=40, very_bad=20, horrible=10, very_horrible=5, impassable=0
     },
 
-    maxspeed_table_default = {
-      urban = 50,
-      rural = 90,
-      trunk = 110,
-      motorway = 130
-    },
+    maxspeed_table_default = { urban=50, rural=90, trunk=110, motorway=130 },
 
-    relation_types = Sequence {
-      "route"
-    },
+    relation_types = Sequence { "route" },
 
     highway_turn_classification = {},
     access_turn_classification = {}
   }
 end
 
--- Node, way, turn processing logic can remain identical to truck.lua
-process_node = require("truck").process_node
-process_way  = require("truck").process_way
-process_turn = require("truck").process_turn
+-- Define processing functions (empty placeholders if needed)
+function process_node(node, result)
+  -- custom node logic here if needed
+end
 
+function process_way(way, result)
+  -- custom way logic here if needed
+end
+
+function process_turn(turn)
+  -- custom turn logic here if needed
+end
+
+-- Return table for OSRM
 return {
   setup = setup,
-  process_way = process_way,
   process_node = process_node,
+  process_way = process_way,
   process_turn = process_turn
 }
