@@ -104,10 +104,12 @@ else
     print_status "Using existing US map data"
 fi
 
-# OSRM processing (Latest image + MLD)
+# Use official MLD-enabled OSRM image
 THREADS=$(free -g | awk '/^Mem:/{if($7>25) print 4; else print 2}')
-OSRM_IMG="ghcr.io/project-osrm/osrm-backend:latest"
+OSRM_IMG="osrm/osrm-backend:5.36.0"
+docker pull $OSRM_IMG
 
+# OSRM processing (MLD)
 print_status "Extracting OSRM data with MLD..."
 docker run -t -v "$PWD:/data" -v "$PWD/../truck.lua:/opt/truck.lua" $OSRM_IMG osrm-extract -p /opt/truck.lua /data/us-latest.osm.pbf --algorithm mld --threads $THREADS
 docker run -t -v "$PWD:/data" $OSRM_IMG osrm-partition /data/us-latest.osrm --algorithm mld --threads $THREADS
@@ -130,4 +132,4 @@ else
 fi
 
 echo ""
-print_success "🎉 OSRM Distance Route Calculator Setup Complete (Latest OSRM + MLD)!"
+print_success "🎉 OSRM Distance Route Calculator Setup Complete (Official MLD-enabled OSRM)!"
