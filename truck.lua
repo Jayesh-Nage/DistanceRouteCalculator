@@ -97,15 +97,21 @@ function process_node(profile, node, result, relations)
   Obstacles.process_node(profile, node)
 end
 
--- Minimal way processor
+-- Minimal way processor with nil-safe tags
 function process_way(profile, way, result, relations)
-  local data = {
-    highway = way:get_value_by_key('highway'),
-    bridge  = way:get_value_by_key('bridge')
-  }
-  if not data.highway or data.highway == '' then return end
+  local highway = way:get_value_by_key('highway')
+  if not highway or highway == '' then
+    return
+  end
 
-  -- FIX: use Handlers (imported above) instead of undefined WayHandlers
+  local data = {
+    highway  = highway,
+    bridge   = way:get_value_by_key('bridge') or '',
+    oneway   = way:get_value_by_key('oneway') or 'no',
+    maxspeed = way:get_value_by_key('maxspeed') or ''
+  }
+
+  -- Run handlers safely
   Handlers.run(profile, way, result, data, Sequence {
     Handlers.default_mode,
     Handlers.speed,
