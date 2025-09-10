@@ -1,4 +1,4 @@
--- Minimal restrictive truck.lua for US-wide parsing (32-foot moving truck)
+-- Minimal restrictive truck.lua for US-wide parsing / 32-foot truck routing
 -- OSRM API v4
 
 api_version = 4
@@ -11,6 +11,21 @@ Obstacles = require("lib/obstacles")
 find_access_tag = require("lib/access").find_access_tag
 Utils = require("lib/utils")
 Measure = require("lib/measure")
+
+-- toggle parsing mode (true = parsing, false = routing)
+PARSING_MODE = true
+
+-- real truck dimensions
+REAL_HEIGHT = 4.0     -- meters (13 ft)
+REAL_WIDTH  = 2.6     -- meters (8.5 ft)
+REAL_LENGTH = 9.8     -- meters (32 ft)
+REAL_WEIGHT = 12000   -- kg (12 tons)
+
+-- inflated dimensions for parsing
+PARSE_HEIGHT = 10.0
+PARSE_WIDTH  = 5.0
+PARSE_LENGTH = 20.0
+PARSE_WEIGHT = 100000
 
 function setup()
   return {
@@ -33,11 +48,11 @@ function setup()
     turn_bias            = 1.0,
     cardinal_directions  = false,
 
-    -- TEMPORARILY INFLATED VEHICLE DIMENSIONS FOR PARSING
-    vehicle_height = 10.0,   -- meters (huge, so no way is rejected)
-    vehicle_width  = 5.0,
-    vehicle_length = 20.0,
-    vehicle_weight = 100000, -- kg (ignore weight)
+    -- vehicle dimensions: switch between parsing and routing
+    vehicle_height = PARSING_MODE and PARSE_HEIGHT or REAL_HEIGHT,
+    vehicle_width  = PARSING_MODE and PARSE_WIDTH or REAL_WIDTH,
+    vehicle_length = PARSING_MODE and PARSE_LENGTH or REAL_LENGTH,
+    vehicle_weight = PARSING_MODE and PARSE_WEIGHT or REAL_WEIGHT,
 
     suffix_list = { 'N','NE','E','SE','S','SW','W','NW' },
 
