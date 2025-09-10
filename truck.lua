@@ -1,12 +1,6 @@
 -- Minimal truck profile for testing (US-wide)
 -- No restrictions, includes all roads
 
--- Vehicle properties
-vehicle_height = 4.0
-vehicle_width  = 2.6
-vehicle_length = 9.8
-maxweight      = 12.0
-
 -- Speed assignment per road type
 function get_speed(way, highway, max_speed)
     local speed = 25 -- default speed
