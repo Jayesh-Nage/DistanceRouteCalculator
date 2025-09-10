@@ -1,4 +1,4 @@
--- Truck profile for OSRM
+-- Truck profile for OSRM (US-wide friendly)
 -- Optimized for 32-foot moving trucks, relaxed restrictions to maximize coverage
 
 -- Vehicle properties
@@ -49,17 +49,20 @@ function process_way(way, result, relations)
     local motor_vehicle = way:get_value_by_key("motor_vehicle")
     if motor_vehicle == "no" then return end
 
-    -- Loosened width/height/weight restrictions
+    -- Relaxed height restrictions
     local maxheight = tonumber((way:get_value_by_key("maxheight") or ""):match("([%d%.]+)"))
     if maxheight and maxheight < vehicle_height - 1 then
         -- Skip only if clearly too low
-        return
+        -- optional: comment out for full coverage
+        -- return
     end
 
-    local maxweight_way = tonumber((way:get_value_by_key("maxweight") or ""):match("([%d%.]+)"))
-    if maxweight_way and maxweight_way < maxweight - 2 then
-        return
-    end
+    -- Relaxed weight restrictions
+    -- Ignore maxweight filtering to avoid dropping edges
+    -- local maxweight_way = tonumber((way:get_value_by_key("maxweight") or ""):match("([%d%.]+)"))
+    -- if maxweight_way and maxweight_way < maxweight - 2 then
+    --     return
+    -- end
 
     -- Assign speed
     local base_speed = get_speed(way, highway, nil)
