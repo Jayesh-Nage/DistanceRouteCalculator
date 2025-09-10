@@ -63,6 +63,11 @@ function setup()
       'hgv','goods','motor_vehicle','vehicle','access'
     },
 
+    -- 🔧 Added back so way_handlers.service works
+    service_tag_forbidden = Set {
+      'emergency_access'
+    },
+
     restrictions = Sequence {
       'hgv','goods','motor_vehicle','vehicle'
     },
