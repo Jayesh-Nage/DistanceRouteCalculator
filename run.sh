@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# OSRM Distance Route Calculator - Setup Script (Latest OSRM + MLD)
+# OSRM Distance Route Calculator - Setup Script (Official OSRM + MLD)
 # For Ubuntu AWS Instance with 64GB RAM
 # US-wide routing
 
 set -e
 
-echo "🚀 OSRM Distance Route Calculator Setup (Latest OSRM + MLD)"
+echo "🚀 OSRM Distance Route Calculator Setup (Official OSRM + MLD)"
 echo "========================================================="
 echo "Start time: $(date)"
 echo "Process ID: $$"
@@ -106,7 +106,7 @@ fi
 
 # Use official MLD-enabled OSRM image
 THREADS=$(free -g | awk '/^Mem:/{if($7>25) print 4; else print 2}')
-OSRM_IMG="osrm/osrm-backend:5.36.0"
+OSRM_IMG="osrm/osrm-backend:latest"
 docker pull $OSRM_IMG
 
 # OSRM processing (MLD)
