@@ -230,9 +230,9 @@ fi
 
 # Step 7: OSRM Processing (Extract, Partition, Customize)
 # Check if OSRM files already exist
-if [ -f "us-latest.osrm" ]; then
+if [ -f "texas-latest.osrm" ]; then
     print_warning "OSRM processed files already exist"
-    print_status "Found: us-latest.osrm"
+    print_status "Found: texas-latest.osrm"
     
     # Check if running in background (non-interactive)
     if [ -t 0 ]; then
@@ -358,16 +358,16 @@ print_success "Found $OSRM_FILES OSRM file(s):"
 ls -la *.osrm* 2>/dev/null
 
 # Check if the main .osrm file exists (without extension)
-if [ ! -f "us-latest.osrm" ]; then
+if [ ! -f "texas-latest.osrm" ]; then
     print_warning "Main .osrm file not found, but other OSRM files exist"
     print_progress "This might be normal - continuing with available files"
 else
-    print_success "Main OSRM file found: us-latest.osrm"
+    print_success "Main OSRM file found: texas-latest.osrm"
 fi
-print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-partition /data/us-latest.osrm --threads $THREADS"
+print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-partition /data/texas-latest.osrm --threads $THREADS"
 show_system_resources
 
-$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/us-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
+$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/texas-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
     echo "[$(date '+%H:%M:%S')] $line"
     
     if echo "$line" | grep -q "terminate called after throwing"; then
@@ -408,16 +408,16 @@ print_success "Found $OSRM_FILES OSRM file(s) after partitioning:"
 ls -la *.osrm* 2>/dev/null
 
 # Check if the main .osrm file exists
-if [ ! -f "us-latest.osrm" ]; then
+if [ ! -f "texas-latest.osrm" ]; then
     print_warning "Main .osrm file not found, but other OSRM files exist"
     print_progress "This might be normal - continuing with available files"
 else
-    print_success "Main OSRM file found: us-latest.osrm"
+    print_success "Main OSRM file found: texas-latest.osrm"
 fi
-print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-customize /data/us-latest.osrm --threads $THREADS"
+print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-customize /data/texas-latest.osrm --threads $THREADS"
 show_system_resources
 
-$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/us-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
+$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/texas-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
     echo "[$(date '+%H:%M:%S')] $line"
     
     if echo "$line" | grep -q "terminate called after throwing"; then
@@ -441,7 +441,7 @@ fi
 # Step 8: Start OSRM Server
 print_status "Starting OSRM Server with US map data..."
 print_status "Binding to 0.0.0.0:5001 for external access"
-$DOCKER_CMD run -d --name osrm-us-server -p 0.0.0.0:5001:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/us-latest.osrm
+$DOCKER_CMD run -d --name osrm-us-server -p 0.0.0.0:5001:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/texas-latest.osrm
 
 if [ $? -eq 0 ]; then
     print_success "OSRM Server started successfully on port 5001"
