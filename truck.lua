@@ -1,4 +1,5 @@
--- Minimal restrictive truck.lua profile for 32-foot moving truck
+-- Minimal restrictive truck.lua for US-wide parsing (32-foot moving truck)
+-- OSRM API v4
 
 api_version = 4
 
@@ -8,7 +9,6 @@ Handlers = require("lib/way_handlers")
 Relations = require("lib/relations")
 Obstacles = require("lib/obstacles")
 find_access_tag = require("lib/access").find_access_tag
-limit = require("lib/maxspeed").limit
 Utils = require("lib/utils")
 Measure = require("lib/measure")
 
@@ -20,7 +20,7 @@ function setup()
       process_call_tagless_node      = false,
       u_turn_penalty                 = 30,
       continue_straight_at_waypoint  = true,
-      use_turn_restrictions          = false, -- minimal restriction
+      use_turn_restrictions          = false,
       left_hand_driving              = false,
     },
 
@@ -33,11 +33,11 @@ function setup()
     turn_bias            = 1.0,
     cardinal_directions  = false,
 
-    -- Vehicle dimensions for 32-foot moving truck
-    vehicle_height = 4.0,   -- meters (13 feet)
-    vehicle_width  = 2.6,   -- meters (8.5 feet)
-    vehicle_length = 9.8,   -- meters (32 feet)
-    vehicle_weight = 12000, -- kg (12 tons)
+    -- TEMPORARILY INFLATED VEHICLE DIMENSIONS FOR PARSING
+    vehicle_height = 10.0,   -- meters (huge, so no way is rejected)
+    vehicle_width  = 5.0,
+    vehicle_length = 20.0,
+    vehicle_weight = 100000, -- kg (ignore weight)
 
     suffix_list = { 'N','NE','E','SE','S','SW','W','NW' },
 
@@ -52,6 +52,8 @@ function setup()
     restrictions = Sequence {},
     classes = Sequence { 'toll', 'ferry', 'restricted', 'tunnel' },
     excludable = Sequence { Set {'toll'}, Set {'ferry'} },
+
+    -- only avoid truly impassable things
     avoid = Set { 'impassable', 'steps', 'construction', 'proposed' },
 
     speeds = Sequence {
