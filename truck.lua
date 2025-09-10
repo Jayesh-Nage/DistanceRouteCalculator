@@ -49,16 +49,13 @@ function process_way(way, result, relations)
     local motor_vehicle = way:get_value_by_key("motor_vehicle")
     if motor_vehicle == "no" then return end
 
-    -- Relaxed height restrictions
-    local maxheight = tonumber((way:get_value_by_key("maxheight") or ""):match("([%d%.]+)"))
-    if maxheight and maxheight < vehicle_height - 1 then
-        -- Skip only if clearly too low
-        -- optional: comment out for full coverage
-        -- return
-    end
+    -- Relaxed height restrictions (commented out for full coverage)
+    -- local maxheight = tonumber((way:get_value_by_key("maxheight") or ""):match("([%d%.]+)"))
+    -- if maxheight and maxheight < vehicle_height - 1 then
+    --     return
+    -- end
 
-    -- Relaxed weight restrictions
-    -- Ignore maxweight filtering to avoid dropping edges
+    -- Ignore weight restrictions to maximize coverage
     -- local maxweight_way = tonumber((way:get_value_by_key("maxweight") or ""):match("([%d%.]+)"))
     -- if maxweight_way and maxweight_way < maxweight - 2 then
     --     return
