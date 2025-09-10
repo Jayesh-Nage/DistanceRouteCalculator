@@ -16,7 +16,7 @@ function setup()
             left_hand_driving = false,
         },
         default_mode = mode.driving,
-        default_speed = 13,
+        default_speed = 13,  -- fallback if nothing else applies
         vehicle_height = 4.0,
         vehicle_width  = 2.5,
         vehicle_length = 12.0,
@@ -24,9 +24,9 @@ function setup()
     }
 end
 
--- Use OSRM’s built-in handlers for way processing
 function process_way(profile, way, result)
-    Handlers.handle_default(profile, way, result)
+    -- Use v4 handler (not handle_default!)
+    Handlers.handle_way(profile, way, result, {}, {}, Set.new())
 end
 
 function process_node(node, result) end
