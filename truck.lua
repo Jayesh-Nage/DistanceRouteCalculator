@@ -1,36 +1,32 @@
--- Minimal restrictive truck.lua for US-wide parsing / 32-foot truck routing
+-- Minimal Restrictive Truck Profile for OSRM (32-foot trucks)
 -- OSRM API v4
 
 api_version = 4
 
 Set = require('lib/set')
 Sequence = require('lib/sequence')
-Handlers = require("lib/way_handlers")
-Relations = require("lib/relations")
+WayHandlers = require("lib/way_handlers")
 Obstacles = require("lib/obstacles")
-find_access_tag = require("lib/access").find_access_tag
-Utils = require("lib/utils")
-Measure = require("lib/measure")
 
--- toggle parsing mode (true = parsing, false = routing)
+-- Toggle parsing mode (true = parsing, false = routing)
 PARSING_MODE = true
 
--- real truck dimensions
+-- Real truck dimensions (routing)
 REAL_HEIGHT = 4.0     -- meters (13 ft)
 REAL_WIDTH  = 2.6     -- meters (8.5 ft)
 REAL_LENGTH = 9.8     -- meters (32 ft)
 REAL_WEIGHT = 12000   -- kg (12 tons)
 
--- inflated dimensions for parsing
-PARSE_HEIGHT = 10.0
-PARSE_WIDTH  = 5.0
-PARSE_LENGTH = 20.0
-PARSE_WEIGHT = 100000
+-- Relaxed dimensions for parsing (no edges removed)
+PARSE_HEIGHT = 0.1
+PARSE_WIDTH  = 0.1
+PARSE_LENGTH = 0.1
+PARSE_WEIGHT = 1
 
 function setup()
   return {
     properties = {
-      max_speed_for_map_matching     = 130/3.6, -- 130 km/h -> m/s
+      max_speed_for_map_matching     = 130/3.6,
       weight_name                    = 'routability',
       process_call_tagless_node      = false,
       u_turn_penalty                 = 30,
@@ -48,7 +44,7 @@ function setup()
     turn_bias            = 1.0,
     cardinal_directions  = false,
 
-    -- vehicle dimensions: switch between parsing and routing
+    -- Vehicle dimensions (switch parsing/routing)
     vehicle_height = PARSING_MODE and PARSE_HEIGHT or REAL_HEIGHT,
     vehicle_width  = PARSING_MODE and PARSE_WIDTH or REAL_WIDTH,
     vehicle_length = PARSING_MODE and PARSE_LENGTH or REAL_LENGTH,
@@ -58,8 +54,8 @@ function setup()
 
     barrier_whitelist = Set { 'cattle_grid', 'toll_booth', 'gate', 'lift_gate' },
 
-    access_tag_whitelist = Set { 'yes', 'vehicle', 'permissive', 'designated' },
-    access_tag_blacklist = Set { 'no', 'private' },
+    access_tag_whitelist = Set { 'yes', 'vehicle', 'permissive', 'designated', 'unknown' },
+    access_tag_blacklist = Set {},  -- don't block any roads
     restricted_access_tag_list = Set {},
     access_tags_hierarchy = Sequence { 'vehicle', 'access' },
 
@@ -68,7 +64,7 @@ function setup()
     classes = Sequence { 'toll', 'ferry', 'restricted', 'tunnel' },
     excludable = Sequence { Set {'toll'}, Set {'ferry'} },
 
-    -- only avoid truly impassable things
+    -- Only avoid truly impassable
     avoid = Set { 'impassable', 'steps', 'construction', 'proposed' },
 
     speeds = Sequence {
