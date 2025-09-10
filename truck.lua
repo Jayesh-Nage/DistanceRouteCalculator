@@ -1,6 +1,8 @@
 api_version = 4
+
 Set = require('lib/set')
 Sequence = require('lib/sequence')
+Handlers = require("lib/way_handlers")
 
 function setup()
     return {
@@ -16,23 +18,17 @@ function setup()
         default_mode = mode.driving,
         default_speed = 13,
         vehicle_height = 4.0,
-        vehicle_width = 2.5,
+        vehicle_width  = 2.5,
         vehicle_length = 12.0,
         vehicle_weight = 20000
     }
 end
 
--- Minimal process_way: mark every highway as usable
-function process_way(way, result)
-    local highway = way:get_value_by_key("highway")
-    if not highway then return end
-    result.forward_speed = 50
-    result.backward_speed = 50
-    result.weight = 1
-    result.duration = 1
+-- Use OSRM’s built-in handlers for way processing
+function process_way(profile, way, result)
+    Handlers.handle_default(profile, way, result)
 end
 
--- Minimal empty functions
 function process_node(node, result) end
 function process_turn(turn) end
 
