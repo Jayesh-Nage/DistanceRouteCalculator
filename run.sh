@@ -228,220 +228,85 @@ else
     fi
 fi
 
-# Step 7: OSRM Processing (Extract, Partition, Customize)
+# Step 7: OSRM Processing (Extract only for truck profile)
 # Check if OSRM files already exist
-if [ -f "us-latest.osrm" ]; then
+if [ -f "us-latest.osrm" ] || ls *.osrm* 1> /dev/null 2>&1; then
     print_warning "OSRM processed files already exist"
-    print_status "Found: us-latest.osrm"
     
     # Check if running in background (non-interactive)
     if [ -t 0 ]; then
-        # Interactive mode - ask user
         echo ""
         read -p "Do you want to re-process the OSRM data? (y/N): " -n 1 -r
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            print_status "Re-processing OSRM data (this will take 2-4 hours)..."
-            print_warning "Memory usage will peak at 25-35GB during extraction"
+            print_status "Re-processing OSRM data (this will take 2-3 hours)..."
             SKIP_PROCESSING=false
         else
             print_success "Using existing OSRM processed files"
             SKIP_PROCESSING=true
         fi
     else
-        # Non-interactive mode (background) - use existing files
         print_success "Using existing OSRM processed files"
         SKIP_PROCESSING=true
     fi
 else
-    print_status "Starting OSRM processing (this will take 2-4 hours)..."
-    print_warning "Memory usage will peak at 25-35GB during extraction"
+    print_status "Starting OSRM extraction (truck profile, CH algorithm)..."
     SKIP_PROCESSING=false
 fi
 
 if [ "$SKIP_PROCESSING" != "true" ]; then
 
-# Extract
-print_progress "Step 1/3: Extracting with car profile..."
-print_progress "This step typically takes 2-3 hours and uses 20-25GB RAM"
-print_progress "Using truck.lua profile (optimized for 32-foot moving trucks)"
-print_progress "Using 4 threads to reduce memory pressure (safer for 31GB available)"
+    print_progress "Step 1/1: Extracting with truck.lua profile..."
+    print_progress "This step typically takes 2-3 hours and uses 20-25GB RAM"
 
-# Check available memory
-check_memory
-AVAILABLE_MEMORY=$(free -g | awk '/^Mem:/{print $7}')
-if [ "$AVAILABLE_MEMORY" -lt 25 ]; then
-    print_warning "Low memory detected (${AVAILABLE_MEMORY}GB). Using 2 threads for safety."
-    THREADS=2
-else
+    # Decide threads based on memory
+    check_memory
+    AVAILABLE_MEMORY=$(free -g | awk '/^Mem:/{print $7}')
     THREADS=4
-fi
-print_progress "Using $THREADS threads for extraction"
-
-print_success "Using truck.lua profile (optimized for 32-foot moving trucks)"
-
-# Verify input file exists and show details
-print_progress "Verifying input file..."
-if [ ! -f "us-latest.osm.pbf" ]; then
-    print_error "Input file us-latest.osm.pbf not found!"
-    exit 1
-fi
-
-FILE_SIZE=$(du -h us-latest.osm.pbf | cut -f1)
-print_progress "Input file: us-latest.osm.pbf (${FILE_SIZE})"
-
-# Show Docker command being executed
-print_progress "Executing Docker command:"
-print_progress "docker run -t -v \"$PWD:/data\" -v \"$PWD/../truck.lua:/opt/truck.lua\" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/truck.lua /data/us-latest.osm.pbf --threads $THREADS"
-
-# Run extraction with detailed logging
-print_progress "Starting OSRM extraction..."
-print_progress "This will take 2-3 hours. Monitor memory usage below:"
-show_system_resources
-
-$DOCKER_CMD run -t -v "$PWD:/data" -v "$PWD/../truck.lua:/opt/truck.lua" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/truck.lua /data/us-latest.osm.pbf --threads $THREADS 2>&1 | while IFS= read -r line; do
-    echo "[$(date '+%H:%M:%S')] $line"
-    
-    # Check for specific error patterns
-    if echo "$line" | grep -q "no edges remaining"; then
-        print_error "CRITICAL: No edges remaining after parsing!"
-        print_error "This usually means the profile is too restrictive"
-        print_error "or there's an issue with the input data"
-    elif echo "$line" | grep -q "Profile must return a function table"; then
-        print_error "CRITICAL: Profile syntax error!"
-        print_error "The truck.lua profile has a syntax issue"
-    elif echo "$line" | grep -q "terminate called after throwing"; then
-        print_error "CRITICAL: OSRM process crashed!"
-        print_error "Check memory usage and system resources"
-    elif echo "$line" | grep -q "Parsing finished"; then
-        print_success "Parsing completed successfully!"
-    elif echo "$line" | grep -q "Raw input contains"; then
-        print_progress "Data summary: $line"
+    if [ "$AVAILABLE_MEMORY" -lt 25 ]; then
+        print_warning "Low memory detected (${AVAILABLE_MEMORY}GB). Using 2 threads"
+        THREADS=2
     fi
-done
+    print_progress "Using $THREADS threads for extraction"
 
-if [ $? -eq 0 ]; then
+    # Verify input file exists
+    if [ ! -f "us-latest.osm.pbf" ]; then
+        print_error "Input file us-latest.osm.pbf not found!"
+        exit 1
+    fi
+
+    FILE_SIZE=$(du -h us-latest.osm.pbf | cut -f1)
+    print_progress "Input file: us-latest.osm.pbf (${FILE_SIZE})"
+
+    # Run extraction
+    print_progress "Executing Docker command:"
+    print_progress "docker run -t -v \"$PWD:/data\" -v \"$PWD/../truck.lua:/opt/truck.lua\" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/truck.lua /data/us-latest.osm.pbf --threads $THREADS"
+
+    $DOCKER_CMD run -t -v "$PWD:/data" -v "$PWD/../truck.lua:/opt/truck.lua" \
+        ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/truck.lua /data/us-latest.osm.pbf --threads $THREADS 2>&1 | while IFS= read -r line; do
+            echo "[$(date '+%H:%M:%S')] $line"
+            if echo "$line" | grep -q "Parsing finished"; then
+                print_success "Parsing completed successfully!"
+            elif echo "$line" | grep -q "no edges remaining"; then
+                print_error "No edges remaining after parsing!"
+            elif echo "$line" | grep -q "Profile must return a function table"; then
+                print_error "Profile syntax error in truck.lua!"
+            fi
+    done
+
     print_success "Extraction completed successfully"
-    
-    # Show what files were created
-    print_progress "Files created by extraction:"
-    ls -la *.osrm* 2>/dev/null || print_warning "No .osrm files found"
-    
-    # Show all files in directory
-    print_progress "All files in current directory:"
-    ls -la
-else
-    print_error "Extraction failed"
-    exit 1
+    ls -la *.osrm* 2>/dev/null
 fi
 
-# Partition
-print_progress "Step 2/3: Partitioning data..."
-print_progress "This step typically takes 45-90 minutes and uses 10-15GB RAM"
-print_progress "Using $THREADS threads for partitioning"
-check_memory
-
-# Check what OSRM files were created
-print_progress "Checking OSRM files created by extraction..."
-ls -la *.osrm* 2>/dev/null || print_warning "No .osrm files found in current directory"
-
-# Look for any OSRM files (they might have different extensions)
-OSRM_FILES=$(ls *.osrm* 2>/dev/null | wc -l)
-if [ "$OSRM_FILES" -eq 0 ]; then
-    print_error "No OSRM files found! Extraction may have failed."
-    print_progress "Files in current directory:"
-    ls -la
-    exit 1
-fi
-
-print_success "Found $OSRM_FILES OSRM file(s):"
-ls -la *.osrm* 2>/dev/null
-
-# Check if the main .osrm file exists (without extension)
-if [ ! -f "us-latest.osrm" ]; then
-    print_warning "Main .osrm file not found, but other OSRM files exist"
-    print_progress "This might be normal - continuing with available files"
-else
-    print_success "Main OSRM file found: us-latest.osrm"
-fi
-print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-partition /data/us-latest.osrm --threads $THREADS"
-show_system_resources
-
-$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/us-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
-    echo "[$(date '+%H:%M:%S')] $line"
-    
-    if echo "$line" | grep -q "terminate called after throwing"; then
-        print_error "CRITICAL: Partition process crashed!"
-        print_error "Check memory usage and system resources"
-    elif echo "$line" | grep -q "Partitioning finished"; then
-        print_success "Partitioning completed successfully!"
-    fi
-done
-
-if [ $? -eq 0 ]; then
-    print_success "Partition completed successfully"
-else
-    print_error "Partition failed"
-    exit 1
-fi
-
-# Customize
-print_progress "Step 3/3: Customizing data..."
-print_progress "This step typically takes 45-90 minutes and uses 10-15GB RAM"
-print_progress "Using $THREADS threads for customizing"
-check_memory
-
-# Check OSRM files after partitioning
-print_progress "Checking OSRM files after partitioning..."
-ls -la *.osrm* 2>/dev/null || print_warning "No .osrm files found in current directory"
-
-# Look for any OSRM files
-OSRM_FILES=$(ls *.osrm* 2>/dev/null | wc -l)
-if [ "$OSRM_FILES" -eq 0 ]; then
-    print_error "No OSRM files found! Partition may have failed."
-    print_progress "Files in current directory:"
-    ls -la
-    exit 1
-fi
-
-print_success "Found $OSRM_FILES OSRM file(s) after partitioning:"
-ls -la *.osrm* 2>/dev/null
-
-# Check if the main .osrm file exists
-if [ ! -f "us-latest.osrm" ]; then
-    print_warning "Main .osrm file not found, but other OSRM files exist"
-    print_progress "This might be normal - continuing with available files"
-else
-    print_success "Main OSRM file found: us-latest.osrm"
-fi
-print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-customize /data/us-latest.osrm --threads $THREADS"
-show_system_resources
-
-$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/us-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
-    echo "[$(date '+%H:%M:%S')] $line"
-    
-    if echo "$line" | grep -q "terminate called after throwing"; then
-        print_error "CRITICAL: Customize process crashed!"
-        print_error "Check memory usage and system resources"
-    elif echo "$line" | grep -q "Customizing finished"; then
-        print_success "Customizing completed successfully!"
-    fi
-done
-
-if [ $? -eq 0 ]; then
-    print_success "Customize completed successfully"
-else
-    print_error "Customize failed"
-    exit 1
-fi
-
-print_success "OSRM processing completed successfully!"
-fi
 
 # Step 8: Start OSRM Server
 print_status "Starting OSRM Server with US map data..."
 print_status "Binding to 0.0.0.0:5001 for external access"
 $DOCKER_CMD run -d --name osrm-us-server -p 0.0.0.0:5001:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/us-latest.osrm
+print_status "Starting OSRM Server with US map data..."
+print_status "Binding to 0.0.0.0:5001 for external access"
+$DOCKER_CMD run -d --name osrm-us-server -p 0.0.0.0:5001:5000 \
+    -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm ch /data/us-latest.osrm
 
 if [ $? -eq 0 ]; then
     print_success "OSRM Server started successfully on port 5001"
