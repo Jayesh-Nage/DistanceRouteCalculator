@@ -105,11 +105,12 @@ function process_way(profile, way, result, relations)
   }
   if not data.highway or data.highway == '' then return end
 
-  WayHandlers.run(profile, way, result, data, Sequence {
-    WayHandlers.default_mode,
-    WayHandlers.speed,
-    WayHandlers.oneway,
-    WayHandlers.names
+  -- FIX: use Handlers (imported above) instead of undefined WayHandlers
+  Handlers.run(profile, way, result, data, Sequence {
+    Handlers.default_mode,
+    Handlers.speed,
+    Handlers.oneway,
+    Handlers.names
   }, relations)
 end
 
