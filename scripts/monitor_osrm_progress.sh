@@ -26,7 +26,7 @@ while true; do
         
         # Check for new files
         echo "📁 Files created:"
-        ls -la osrm-data/ | grep "us-latest.osrm" | wc -l | xargs echo "OSRM files:"
+        ls -la osrm-data/ | grep "texas-latest.osrm" | wc -l | xargs echo "OSRM files:"
         
         # Get latest logs
         echo "📝 Latest logs:"

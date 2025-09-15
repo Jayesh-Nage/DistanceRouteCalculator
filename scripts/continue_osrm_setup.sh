@@ -9,8 +9,8 @@ echo "========================================"
 cd osrm-data
 
 # Check if extraction completed
-if [ ! -f "us-latest.osrm" ]; then
-    echo "❌ Extraction not completed yet. us-latest.osrm file not found."
+if [ ! -f "texas-latest.osrm" ]; then
+    echo "❌ Extraction not completed yet. texas-latest.osrm file not found."
     echo "Please wait for the extraction to complete first."
     exit 1
 fi
@@ -19,7 +19,7 @@ echo "✅ Extraction completed. Starting partition step..."
 
 # Step 2: Partition
 echo "📊 Step 2/3: Partitioning data..."
-docker run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/us-latest.osrm
+docker run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/texas-latest.osrm
 
 if [ $? -eq 0 ]; then
     echo "✅ Partition completed successfully"
@@ -30,7 +30,7 @@ fi
 
 # Step 3: Customize
 echo "🔧 Step 3/3: Customizing data..."
-docker run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/us-latest.osrm
+docker run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/texas-latest.osrm
 
 if [ $? -eq 0 ]; then
     echo "✅ Customize completed successfully"
@@ -41,7 +41,7 @@ fi
 
 # Step 4: Start OSRM Server
 echo "🌐 Starting OSRM Server with US map data..."
-docker run -d -p 5001:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/us-latest.osrm
+docker run -d -p 5001:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/texas-latest.osrm
 
 if [ $? -eq 0 ]; then
     echo "✅ OSRM Server started successfully on port 5001"

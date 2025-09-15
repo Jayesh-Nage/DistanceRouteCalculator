@@ -32,10 +32,10 @@ function setup()
     cardinal_directions       = false,
 
     -- Vehicle dimensions (bigger than car)
-    vehicle_height = 4.0,  -- typical max truck height
-    vehicle_width  = 2.6,  -- trucks wider than cars
-    vehicle_length = 12.0, -- long vehicle
-    vehicle_weight = 40000, -- 40 tons
+    vehicle_height = 4.0,   -- meters
+    vehicle_width  = 2.6,   -- meters
+    vehicle_length = 9.8,   -- meters
+    vehicle_weight = 12000, -- kg (12 tons)
 
     suffix_list = {
       'N','NE','E','SE','S','SW','W','NW','North','South','West','East'
@@ -63,7 +63,6 @@ function setup()
       'hgv','goods','motor_vehicle','vehicle','access'
     },
 
-    -- 🔧 Added back so way_handlers.service works
     service_tag_forbidden = Set {
       'emergency_access'
     },
@@ -88,11 +87,11 @@ function setup()
     -- Speeds adapted for trucks (lower than cars)
     speeds = Sequence {
       highway = {
-        motorway        = 80,
+        motorway        = 88, -- ~55 mph
         motorway_link   = 40,
         trunk           = 75,
         trunk_link      = 35,
-        primary         = 65,
+        primary         = 64, -- ~40 mph
         primary_link    = 30,
         secondary       = 55,
         secondary_link  = 25,
@@ -168,7 +167,7 @@ function setup()
     },
 
     maxspeed_table = {
-      ["de:motorway"] = 80,   -- trucks in Germany
+      ["de:motorway"] = 80,
       ["de:rural"] = 60,
       ["ru:motorway"] = 90,
       ["pl:motorway"] = 90,

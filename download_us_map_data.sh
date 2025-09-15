@@ -183,11 +183,11 @@ PROJECT_ROOT="$PWD"
 cd osrm-data
 
 # Check if PBF file already exists
-if [ -f "us-latest.osm.pbf" ]; then
-    FILE_SIZE=$(du -h us-latest.osm.pbf | cut -f1)
+if [ -f "texas-latest.osm.pbf" ]; then
+    FILE_SIZE=$(du -h texas-latest.osm.pbf | cut -f1)
     print_warning "US map data already exists (${FILE_SIZE})"
-    print_status "File: us-latest.osm.pbf"
-    print_status "Location: $(pwd)/us-latest.osm.pbf"
+    print_status "File: texas-latest.osm.pbf"
+    print_status "Location: $(pwd)/texas-latest.osm.pbf"
     
     # Check if running in background (non-interactive)
     if [ -t 0 ]; then
@@ -198,9 +198,9 @@ if [ -f "us-latest.osm.pbf" ]; then
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             print_status "Re-downloading US map data (this may take 30-60 minutes)..."
             print_warning "File size: ~11GB - ensure you have sufficient disk space"
-            wget -O us-latest.osm.pbf http://download.geofabrik.de/north-america/us-latest.osm.pbf
-            if [ -f "us-latest.osm.pbf" ]; then
-                FILE_SIZE=$(du -h us-latest.osm.pbf | cut -f1)
+            wget -O texas-latest.osm.pbf http://download.geofabrik.de/north-america/texas-latest.osm.pbf
+            if [ -f "texas-latest.osm.pbf" ]; then
+                FILE_SIZE=$(du -h texas-latest.osm.pbf | cut -f1)
                 print_success "US map data re-downloaded successfully (${FILE_SIZE})"
             else
                 print_error "Failed to re-download US map data"
@@ -217,10 +217,10 @@ else
     # Download US map data (11GB)
     print_status "Downloading US map data (this may take 30-60 minutes)..."
     print_warning "File size: ~11GB - ensure you have sufficient disk space"
-    wget -O us-latest.osm.pbf http://download.geofabrik.de/north-america/us-latest.osm.pbf
+    wget -O texas-latest.osm.pbf http://download.geofabrik.de/north-america/texas-latest.osm.pbf
 
-    if [ -f "us-latest.osm.pbf" ]; then
-        FILE_SIZE=$(du -h us-latest.osm.pbf | cut -f1)
+    if [ -f "texas-latest.osm.pbf" ]; then
+        FILE_SIZE=$(du -h texas-latest.osm.pbf | cut -f1)
         print_success "US map data downloaded successfully (${FILE_SIZE})"
     else
         print_error "Failed to download US map data"

@@ -58,33 +58,33 @@ if [ -d "osrm-data" ]; then
     
     # Check for main OSRM files
     print_status "Checking for main OSRM files..."
-    if [ -f "osrm-data/us-latest.osrm" ]; then
-        print_success "Main OSRM file found: us-latest.osrm"
-        FILE_SIZE=$(du -h osrm-data/us-latest.osrm | cut -f1)
+    if [ -f "osrm-data/texas-latest.osrm" ]; then
+        print_success "Main OSRM file found: texas-latest.osrm"
+        FILE_SIZE=$(du -h osrm-data/texas-latest.osrm | cut -f1)
         print_status "Size: $FILE_SIZE"
     else
-        print_error "Main OSRM file missing: us-latest.osrm"
+        print_error "Main OSRM file missing: texas-latest.osrm"
     fi
     
-    if [ -f "osrm-data/us-latest.osrm.hsgr" ]; then
-        print_success "HSGR file found: us-latest.osrm.hsgr"
-        FILE_SIZE=$(du -h osrm-data/us-latest.osrm.hsgr | cut -f1)
+    if [ -f "osrm-data/texas-latest.osrm.hsgr" ]; then
+        print_success "HSGR file found: texas-latest.osrm.hsgr"
+        FILE_SIZE=$(du -h osrm-data/texas-latest.osrm.hsgr | cut -f1)
         print_status "Size: $FILE_SIZE"
     else
-        print_warning "HSGR file missing: us-latest.osrm.hsgr"
+        print_warning "HSGR file missing: texas-latest.osrm.hsgr"
     fi
     
-    if [ -f "osrm-data/us-latest.osrm.edges" ]; then
-        print_success "Edges file found: us-latest.osrm.edges"
-        FILE_SIZE=$(du -h osrm-data/us-latest.osrm.edges | cut -f1)
+    if [ -f "osrm-data/texas-latest.osrm.edges" ]; then
+        print_success "Edges file found: texas-latest.osrm.edges"
+        FILE_SIZE=$(du -h osrm-data/texas-latest.osrm.edges | cut -f1)
         print_status "Size: $FILE_SIZE"
     else
-        print_warning "Edges file missing: us-latest.osrm.edges"
+        print_warning "Edges file missing: texas-latest.osrm.edges"
     fi
     
     # Check file permissions
     print_status "Checking file permissions..."
-    ls -la osrm-data/us-latest.osrm* 2>/dev/null | head -5
+    ls -la osrm-data/texas-latest.osrm* 2>/dev/null | head -5
     
 else
     print_error "osrm-data directory not found"
@@ -115,7 +115,7 @@ print_status "Testing OSRM server startup..."
 cd osrm-data
 
 print_status "Starting OSRM server for testing..."
-$DOCKER_CMD run -d --name osrm-test-server -p 5002:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/us-latest.osrm
+$DOCKER_CMD run -d --name osrm-test-server -p 5002:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/texas-latest.osrm
 
 sleep 5
 
