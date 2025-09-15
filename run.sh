@@ -183,11 +183,11 @@ PROJECT_ROOT="$PWD"
 cd osrm-data
 
 # Check if PBF file already exists
-if [ -f "texas-latest.osm.pbf" ]; then
-    FILE_SIZE=$(du -h texas-latest.osm.pbf | cut -f1)
+if [ -f "us-latest.osm.pbf" ]; then
+    FILE_SIZE=$(du -h us-latest.osm.pbf | cut -f1)
     print_warning "US map data already exists (${FILE_SIZE})"
-    print_status "File: texas-latest.osm.pbf"
-    print_status "Location: $(pwd)/texas-latest.osm.pbf"
+    print_status "File: us-latest.osm.pbf"
+    print_status "Location: $(pwd)/us-latest.osm.pbf"
     
     # Check if running in background (non-interactive)
     if [ -t 0 ]; then
@@ -198,9 +198,9 @@ if [ -f "texas-latest.osm.pbf" ]; then
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             print_status "Re-downloading US map data (this may take 30-60 minutes)..."
             print_warning "File size: ~11GB - ensure you have sufficient disk space"
-            wget -O texas-latest.osm.pbf http://download.geofabrik.de/north-america/texas-latest.osm.pbf
-            if [ -f "texas-latest.osm.pbf" ]; then
-                FILE_SIZE=$(du -h texas-latest.osm.pbf | cut -f1)
+            wget -O us-latest.osm.pbf http://download.geofabrik.de/north-america/us-latest.osm.pbf
+            if [ -f "us-latest.osm.pbf" ]; then
+                FILE_SIZE=$(du -h us-latest.osm.pbf | cut -f1)
                 print_success "US map data re-downloaded successfully (${FILE_SIZE})"
             else
                 print_error "Failed to re-download US map data"
@@ -217,10 +217,10 @@ else
     # Download US map data (11GB)
     print_status "Downloading US map data (this may take 30-60 minutes)..."
     print_warning "File size: ~11GB - ensure you have sufficient disk space"
-    wget -O texas-latest.osm.pbf http://download.geofabrik.de/north-america/texas-latest.osm.pbf
+    wget -O us-latest.osm.pbf http://download.geofabrik.de/north-america/us-latest.osm.pbf
 
-    if [ -f "texas-latest.osm.pbf" ]; then
-        FILE_SIZE=$(du -h texas-latest.osm.pbf | cut -f1)
+    if [ -f "us-latest.osm.pbf" ]; then
+        FILE_SIZE=$(du -h us-latest.osm.pbf | cut -f1)
         print_success "US map data downloaded successfully (${FILE_SIZE})"
     else
         print_error "Failed to download US map data"
@@ -230,9 +230,9 @@ fi
 
 # Step 7: OSRM Processing (Extract, Partition, Customize)
 # Check if OSRM files already exist
-if [ -f "texas-latest.osrm" ]; then
+if [ -f "us-latest.osrm" ]; then
     print_warning "OSRM processed files already exist"
-    print_status "Found: texas-latest.osrm"
+    print_status "Found: us-latest.osrm"
     
     # Check if running in background (non-interactive)
     if [ -t 0 ]; then
@@ -282,24 +282,24 @@ print_success "Using truck.lua profile (optimized for 32-foot moving trucks)"
 
 # Verify input file exists and show details
 print_progress "Verifying input file..."
-if [ ! -f "texas-latest.osm.pbf" ]; then
-    print_error "Input file texas-latest.osm.pbf not found!"
+if [ ! -f "us-latest.osm.pbf" ]; then
+    print_error "Input file us-latest.osm.pbf not found!"
     exit 1
 fi
 
-FILE_SIZE=$(du -h texas-latest.osm.pbf | cut -f1)
-print_progress "Input file: texas-latest.osm.pbf (${FILE_SIZE})"
+FILE_SIZE=$(du -h us-latest.osm.pbf | cut -f1)
+print_progress "Input file: us-latest.osm.pbf (${FILE_SIZE})"
 
 # Show Docker command being executed
 print_progress "Executing Docker command:"
-print_progress "docker run -t -v \"$PWD:/data\" -v \"$PWD/../truck.lua:/opt/truck.lua\" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/truck.lua /data/texas-latest.osm.pbf --threads $THREADS"
+print_progress "docker run -t -v \"$PWD:/data\" -v \"$PWD/../truck.lua:/opt/truck.lua\" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/truck.lua /data/us-latest.osm.pbf --threads $THREADS"
 
 # Run extraction with detailed logging
 print_progress "Starting OSRM extraction..."
 print_progress "This will take 2-3 hours. Monitor memory usage below:"
 show_system_resources
 
-$DOCKER_CMD run -t -v "$PWD:/data" -v "$PWD/../truck.lua:/opt/truck.lua" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/truck.lua /data/texas-latest.osm.pbf --threads $THREADS 2>&1 | while IFS= read -r line; do
+$DOCKER_CMD run -t -v "$PWD:/data" -v "$PWD/../truck.lua:/opt/truck.lua" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/truck.lua /data/us-latest.osm.pbf --threads $THREADS 2>&1 | while IFS= read -r line; do
     echo "[$(date '+%H:%M:%S')] $line"
     
     # Check for specific error patterns
@@ -358,16 +358,16 @@ print_success "Found $OSRM_FILES OSRM file(s):"
 ls -la *.osrm* 2>/dev/null
 
 # Check if the main .osrm file exists (without extension)
-if [ ! -f "texas-latest.osrm" ]; then
+if [ ! -f "us-latest.osrm" ]; then
     print_warning "Main .osrm file not found, but other OSRM files exist"
     print_progress "This might be normal - continuing with available files"
 else
-    print_success "Main OSRM file found: texas-latest.osrm"
+    print_success "Main OSRM file found: us-latest.osrm"
 fi
-print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-partition /data/texas-latest.osrm --threads $THREADS"
+print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-partition /data/us-latest.osrm --threads $THREADS"
 show_system_resources
 
-$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/texas-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
+$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/us-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
     echo "[$(date '+%H:%M:%S')] $line"
     
     if echo "$line" | grep -q "terminate called after throwing"; then
@@ -408,16 +408,16 @@ print_success "Found $OSRM_FILES OSRM file(s) after partitioning:"
 ls -la *.osrm* 2>/dev/null
 
 # Check if the main .osrm file exists
-if [ ! -f "texas-latest.osrm" ]; then
+if [ ! -f "us-latest.osrm" ]; then
     print_warning "Main .osrm file not found, but other OSRM files exist"
     print_progress "This might be normal - continuing with available files"
 else
-    print_success "Main OSRM file found: texas-latest.osrm"
+    print_success "Main OSRM file found: us-latest.osrm"
 fi
-print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-customize /data/texas-latest.osrm --threads $THREADS"
+print_progress "Executing: docker run -t -v \"$PWD:/data\" ghcr.io/project-osrm/osrm-backend osrm-customize /data/us-latest.osrm --threads $THREADS"
 show_system_resources
 
-$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/texas-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
+$DOCKER_CMD run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/us-latest.osrm --threads $THREADS 2>&1 | while IFS= read -r line; do
     echo "[$(date '+%H:%M:%S')] $line"
     
     if echo "$line" | grep -q "terminate called after throwing"; then
@@ -441,7 +441,7 @@ fi
 # Step 8: Start OSRM Server
 print_status "Starting OSRM Server with US map data..."
 print_status "Binding to 0.0.0.0:5001 for external access"
-$DOCKER_CMD run -d --name osrm-us-server -p 0.0.0.0:5001:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/texas-latest.osrm
+$DOCKER_CMD run -d --name osrm-us-server -p 0.0.0.0:5001:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/us-latest.osrm
 
 if [ $? -eq 0 ]; then
     print_success "OSRM Server started successfully on port 5001"

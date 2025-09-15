@@ -51,8 +51,8 @@ if [ -d "osrm-data" ]; then
     fi
     
     # Check if main OSRM file exists (not just timestamp)
-    if [ ! -f "osrm-data/texas-latest.osrm" ]; then
-        print_error "Main OSRM file (texas-latest.osrm) not found!"
+    if [ ! -f "osrm-data/us-latest.osrm" ]; then
+        print_error "Main OSRM file (us-latest.osrm) not found!"
         print_status "Only found:"
         ls -la osrm-data/*.osrm* 2>/dev/null
         print_status "OSRM processing may have failed. Please run the full setup again: ./run.sh"
@@ -88,7 +88,7 @@ $DOCKER_CMD rm osrm-us-server 2>/dev/null || true
 print_status "Starting OSRM Server with processed US map data..."
 print_status "Binding to 0.0.0.0:5001 for external access"
 
-$DOCKER_CMD run -d --name osrm-us-server -p 0.0.0.0:5001:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/texas-latest.osrm
+$DOCKER_CMD run -d --name osrm-us-server -p 0.0.0.0:5001:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/us-latest.osrm
 
 if [ $? -eq 0 ]; then
     print_success "OSRM Server started successfully on port 5001"
